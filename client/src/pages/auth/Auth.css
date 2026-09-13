@@ -102,3 +102,35 @@
   color: #2563eb;
   font-weight: 600;
 }
+
+
+.verify-email-box{
+  background:#EFF6FF;
+  border:1px solid #BFDBFE;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:20px;
+  text-align:center;
+}
+
+.verify-email-box strong{
+  color:#1E40AF;
+}
+
+.verify-email-box p{
+  margin-top:5px;
+  color:#1E3A8A;
+  font-weight:600;
+} 
+
+.forgot-link {
+  text-align: right;
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.forgot-link a {
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+}

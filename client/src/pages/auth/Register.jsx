@@ -33,13 +33,16 @@ function Register() {
         role: "user",
       });
 
-      alert(response.message || "Registration Successful!");
+      alert(response.message);
 
-      navigate("/login");
+      navigate("/verify-otp", {
+        state: {
+          email: formData.email,
+        },
+      });
+
     } catch (error) {
-      alert(
-        error.response?.data?.message || "Registration Failed!"
-      );
+      alert(error.response?.data?.message || "Registration Failed");
     } finally {
       setLoading(false);
     }
@@ -53,12 +56,14 @@ function Register() {
             <span className="blue">Cloud</span>
             <span className="orange">Lab AI</span>
           </h1>
+
           <p>Create your CloudLab account</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Full Name</label>
+
             <input
               type="text"
               name="fullName"
@@ -71,6 +76,7 @@ function Register() {
 
           <div className="form-group">
             <label>Email Address</label>
+
             <input
               type="email"
               name="email"
@@ -83,6 +89,7 @@ function Register() {
 
           <div className="form-group">
             <label>College Name</label>
+
             <input
               type="text"
               name="college"
@@ -95,18 +102,19 @@ function Register() {
 
           <div className="form-group">
             <label>Password</label>
+
             <input
               type="password"
               name="password"
-              placeholder="Create your password"
+              placeholder="Create password"
               value={formData.password}
               onChange={handleChange}
               required
             />
           </div>
 
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
+          <button className="auth-btn" disabled={loading}>
+            {loading ? "Sending OTP..." : "Create Account"}
           </button>
         </form>
 

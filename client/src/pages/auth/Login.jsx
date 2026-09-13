@@ -28,20 +28,14 @@ function Login() {
 
       const response = await loginUser(formData);
 
-      // Save JWT Token
       localStorage.setItem("token", response.token);
-
-      // Save User Details
       localStorage.setItem("user", JSON.stringify(response.user));
 
       alert("Login Successful!");
 
-      // Redirect to User Dashboard
       navigate("/user/dashboard");
     } catch (error) {
-      alert(
-        error.response?.data?.message || "Invalid Email or Password"
-      );
+      alert(error.response?.data?.message || "Invalid Email or Password");
     } finally {
       setLoading(false);
     }
@@ -64,7 +58,7 @@ function Login() {
             <input
               type="email"
               name="email"
-              placeholder="Enter your email address"
+              placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
               required
@@ -76,21 +70,24 @@ function Login() {
             <input
               type="password"
               name="password"
-              placeholder="Enter your password"
+              placeholder="Enter password"
               value={formData.password}
               onChange={handleChange}
               required
             />
           </div>
 
-          <button type="submit" className="auth-btn" disabled={loading}>
+          <div className="forgot-link">
+            <Link to="/forgot-password">Forgot Password?</Link>
+          </div>
+
+          <button className="auth-btn" disabled={loading}>
             {loading ? "Logging In..." : "Login"}
           </button>
         </form>
 
         <div className="auth-footer">
-          Don't have an account?{" "}
-          <Link to="/register">Register</Link>
+          Don't have an account? <Link to="/register">Register</Link>
         </div>
       </div>
     </div>
