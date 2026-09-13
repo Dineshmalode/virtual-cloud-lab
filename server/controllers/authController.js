@@ -1,114 +1,162 @@
-import generateToken from "../utils/generateToken.js";
-import bcrypt from "bcryptjs"
 import User from "../models/User.js";
+import Otp from "../models/Otp.js";
 
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-export const registerUser = async (req, res) => {
+import { sendOtpEmail } from "../services/emailService.js";
+
+/* REGISTER - SEND OTP */
+
+export const register = async (req, res) => {
   try {
-   const { fullName, email, password, college } = req.body;
+    const { fullName, email, college, password, role } = req.body;
 
-    // Check if all required fields are provided
-    if (!fullName || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Please fill all required fields.",
-      });
-    }
-    
-
-    // Check if email already exists
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      return res.status(409).json({
-        success: false,
+      return res.status(400).json({
         message: "Email already registered.",
       });
     }
 
-    // Encrypt password
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
-    const newUser = await User.create({
-      fullName,
+    await Otp.findOneAndDelete({ email });
+
+    await Otp.create({
       email,
-      password: hashedPassword,
+      otp,
+      fullName,
       college,
-      role: "user",
+      password: hashedPassword,
+      role,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully.",
-      user: {
-        id: newUser._id,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        role: newUser.role,
-      },
+    await sendOtpEmail(email, otp, fullName);
+
+    res.status(200).json({
+      message: "OTP sent successfully.",
     });
   } catch (error) {
-    console.error("Registration Error:", error);
+    console.log(error);
 
     res.status(500).json({
-      success: false,
-      message: "Server Error",
+      message: "Failed to send OTP.",
     });
   }
 };
 
-export const loginUser = async (req, res) => {
+/* VERIFY OTP */
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const otpRecord = await Otp.findOne({ email });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        message: "OTP not found.",
+      });
+    }
+
+    if (otpRecord.expiresAt < new Date()) {
+      await Otp.deleteOne({ email });
+
+      return res.status(400).json({
+        message: "OTP expired.",
+      });
+    }
+
+    if (otpRecord.otp !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP.",
+      });
+    }
+
+    await User.create({
+      fullName: otpRecord.fullName,
+      email: otpRecord.email,
+      college: otpRecord.college,
+      password: otpRecord.password,
+      role: otpRecord.role,
+      isVerified: true,
+    });
+
+    await Otp.deleteOne({ email });
+
+    res.status(201).json({
+      message: "Email verified successfully.",
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "OTP verification failed.",
+    });
+  }
+};
+
+/* LOGIN */
+
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check required fields
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required."
-      });
-    }
-
-    // Find user by email
     const user = await User.findOne({ email });
 
-    // Check email and password
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password."
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found.",
       });
     }
 
-    // Success response with JWT
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid password.",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
     res.status(200).json({
-      success: true,
       message: "Login successful.",
-      token: generateToken(user._id),
+
+      token,
+
       user: {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
-        role: user.role
-      }
+        college: user.college,
+        role: user.role,
+      },
     });
-
   } catch (error) {
-    console.error("Login Error:", error);
+    console.log(error);
 
     res.status(500).json({
-      success: false,
-      message: "Server Error"
+      message: "Login failed.",
     });
   }
-};
-
-// Get Logged In User Profile
-export const getProfile = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Profile fetched successfully.",
-    user: req.user,
-  });
 };

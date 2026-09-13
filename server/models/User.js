@@ -5,15 +5,17 @@ const userSchema = new mongoose.Schema(
     fullName: {
       type: String,
       required: true,
-      trim: true,
     },
 
     email: {
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
-      trim: true,
+    },
+
+    college: {
+      type: String,
+      required: true,
     },
 
     password: {
@@ -23,13 +25,12 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "faculty", "user"],
       default: "user",
     },
 
-    college: {
-      type: String,
-      default: "",
+    isVerified: {
+      type: Boolean,
+      default: true,
     },
   },
   {
@@ -37,6 +38,4 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-const User = mongoose.model("User", userSchema);
-
-export default User;
+export default mongoose.model("User", userSchema);
